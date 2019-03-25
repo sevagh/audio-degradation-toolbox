@@ -1,0 +1,4 @@
+acoustics
+numpy
+scipy
+pydub
