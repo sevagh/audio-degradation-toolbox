@@ -18,7 +18,7 @@ REQUIRES_PYTHON = '>=3.6.0'
 VERSION = None
 
 REQUIRED = [
-    #'requests', 'maya', 'records',
+    'acoustics', 'numpy', 'pydub'
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
