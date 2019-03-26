@@ -20,6 +20,75 @@ Available degradations (executed in order of the JSON array):
         "name": "mp3",
         ["bitrate": 320]
     }
+
+    gain: add volume in db
+    {
+        "name": "gain",
+        ["volume": 10]
+    }
+
+    normalize
+    {
+        "name": "normalize"
+    }
+
+    low_pass: apply a low-pass filter
+    {
+        "name": "low_pass",
+        ["cutoff": 1000]
+    }
+
+    high_pass: apply a high-pass filter
+    {
+        "name": "high_pass",
+        ["cutoff": 1000]
+    }
+
+    trim_millis: lop off milliseconds at offset (-1 = from end)
+    {
+        "name": "trim_millis",
+        ["amount": 100,]
+        ["offset": 0]
+    }
+
+    mix: mix another audio file with the original
+    {
+        "name": "mix",
+        "path": "./relative_path_mix.wav"
+    }
+
+    impulse_response: convolve with IR
+    {
+        "name": "impulse_response",
+        "path": "./relative_path_ir.wav"
+    }
+
+    speedup: make it faster
+    {
+        "name": "speedup",
+        "speed": 2
+    }
+
+    resample: resample to new sampling rate
+    {
+        "name": "resample",
+        "rate": 44100
+    }
+
+    pitch_shift
+    {
+        "name": "pitch_shift",
+        "ocatves": -0.5
+    }
+
+    dynamic_range_compression
+    {
+        "name": "dynamic_range_compression",
+        ["threshold": -20,]
+        ["ratio": 4.0,]
+        ["attack": 5.0,]
+        ["release": 50.0]
+    }
 """
 
 

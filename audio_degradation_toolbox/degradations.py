@@ -159,9 +159,7 @@ def _normalize(y, bitwidth):
         larger = numpy.amax(y)
     else:
         larger = abs(numpy.amin(y))
-    y = (
-        y / larger * ((2 ** bitwidth / 2) - 1)
-    )
+    y = y / larger * ((2 ** bitwidth / 2) - 1)
     return y
 
 

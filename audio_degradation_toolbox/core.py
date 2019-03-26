@@ -66,7 +66,7 @@ class Degradation(object):
             self.file_audio = apply_mix(self.file_audio, mix_path, snr)
             params = "mix_path: {0}, snr: {1}".format(mix_path, snr)
         elif name == "speedup":
-            speed = d["speed"]
+            speed = float(d["speed"])
             self.file_audio = apply_speedup(self.file_audio, speed)
             params = "speed: {0}".format(speed)
         elif name == "resample":
