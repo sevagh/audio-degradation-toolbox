@@ -5,7 +5,15 @@ from pydub.utils import get_array_type
 
 
 class Audio(object):
-    def __init__(self, path=None, ext=None, samples=None, old_audio=None, sound=None):
+    def __init__(
+        self,
+        path=None,
+        ext=None,
+        samples=None,
+        old_audio=None,
+        sound=None,
+        sample_rate=None,
+    ):
         if (
             (path and (samples is not None))
             or (path and sound)
@@ -24,7 +32,10 @@ class Audio(object):
             self.format = ext
         if samples is not None:
             self.samples = samples
-            self.sample_rate = old_audio.sample_rate
+            if sample_rate:
+                self.sample_rate = sample_rate
+            else:
+                self.sample_rate = old_audio.sample_rate
             self.sound = old_audio.sound._spawn(self.samples)
             self.format = old_audio.format
         if sound:

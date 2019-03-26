@@ -8,11 +8,18 @@ import math
 from tempfile import NamedTemporaryFile
 from .degradations import (
     apply_noise,
+    apply_mix,
     mp3_transcode,
     apply_gain,
     apply_normalization,
-    apply_highpass,
-    apply_lowpass,
+    apply_high_pass,
+    apply_low_pass,
+    trim_millis,
+    apply_speedup,
+    apply_resample,
+    apply_pitch_shift,
+    apply_dynamic_range_compression,
+    apply_impulse_response,
 )
 from .audio import Audio
 
@@ -48,6 +55,43 @@ class Degradation(object):
             cutoff = float(d.get("cutoff", 1000.0))
             self.file_audio = apply_highpass(self.file_audio, cutoff)
             params = "cutoff: {0}".format(cutoff)
+        elif name == "trim_millis":
+            amount = int(d.get("amount", 100))
+            offset = int(d.get("offset", 0))
+            self.file_audio = trim_millis(self.file_audio, amount, offset)
+            params = "amount: {0}, offset: {1}".format(amount, offset)
+        elif name == "mix":
+            mix_path = d["path"]
+            snr = d.get("snr", 20)
+            self.file_audio = apply_mix(self.file_audio, mix_path, snr)
+            params = "mix_path: {0}, snr: {1}".format(mix_path, snr)
+        elif name == "speedup":
+            speed = d["speed"]
+            self.file_audio = apply_speedup(self.file_audio, speed)
+            params = "speed: {0}".format(speed)
+        elif name == "resample":
+            rate = int(d["rate"])
+            self.file_audio = apply_resample(self.file_audio, rate)
+            params = "rate: {0}".format(rate)
+        elif name == "pitch_shift":
+            octaves = float(d["octaves"])
+            self.file_audio = apply_pitch_shift(self.file_audio, octaves)
+            params = "octaves: {0}".format(octaves)
+        elif name == "dynamic_range_compression":
+            threshold = float(d.get("threshold", -20.0))
+            ratio = float(d.get("ratio", 4.0))
+            attack = float(d.get("attack", 5.0))
+            release = float(d.get("release", 50.0))
+            self.file_audio = apply_dynamic_range_compression(
+                self.file_audio, threshold, ratio, attack, release
+            )
+            params = "threshold: {0}, ratio: {1}, attack: {2}, release: {3}".format(
+                threshold, ratio, attack, release
+            )
+        elif name == "impulse_response":
+            path = d["path"]
+            self.file_audio = apply_impulse_response(self.file_audio, path)
+            params = "path: {0}".format(path)
         else:
             raise ValueError("Invalid degradation {0}".format(name))
 

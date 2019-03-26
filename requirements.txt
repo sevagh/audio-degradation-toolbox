@@ -1,3 +1,4 @@
 acoustics
 numpy
 pydub
+scipy
