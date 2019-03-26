@@ -1,4 +1,5 @@
 import numpy
+from numpy.linalg import norm
 from pydub import AudioSegment
 from pydub.utils import get_array_type
 import pydub.effects as pydub_effects
@@ -152,22 +153,28 @@ def apply_dynamic_range_compression(audio, threshold, ratio, attack, release):
     )
 
 
+# thanks https://github.com/limmor1/Convolve
+def _normalize(y, bitwidth):
+    if abs(numpy.amax(y)) > abs(numpy.amin(y)):
+        larger = numpy.amax(y)
+    else:
+        larger = abs(numpy.amin(y))
+    y = (
+        y / larger * ((2 ** bitwidth / 2) - 1)
+    )
+    return y
+
+
 def apply_impulse_response(audio, ir_path):
     ir = Audio(path=ir_path)
-    # ir = apply_normalization(ir)
 
     if ir.sample_rate != audio.sample_rate:
         ir = apply_resample(ir, audio.sample_rate)
 
-    ir = _stretch_mix(audio, ir)
-
-    # conv_s = numpy.convolve(numpy.frombuffer(audio.samples), numpy.frombuffer(ir.samples), mode='same')
-    conv_s = scipy_signal.fftconvolve(audio.samples, ir.samples, mode="same")
-
-    print(len(ir.samples))
-    print(len(audio.samples))
-    print(len(conv_s))
+    conv_s = scipy_signal.fftconvolve(audio.samples, ir.samples)
+    conv_s = _normalize(conv_s, audio.sound.sample_width * 8)
 
     conv_s = array.array(audio.sound.array_type, conv_s.astype(audio.sound.array_type))
 
-    return Audio(samples=conv_s, old_audio=audio)
+    conv = Audio(samples=conv_s, old_audio=audio)
+    return conv
