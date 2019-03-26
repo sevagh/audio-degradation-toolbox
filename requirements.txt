@@ -2,3 +2,4 @@ acoustics
 numpy
 scipy
 pydub
+numba
