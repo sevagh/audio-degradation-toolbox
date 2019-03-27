@@ -5,6 +5,48 @@ Python 3 implementation of the MATLAB [Audio Degradation Toolbox](https://code.s
 
 This tool can read non-WAV files as input, but only outputs single-channel WAV files - this is because I find that WAV is the most universal format with friendly-licensed libraries in any language.
 
+### Available degradations
+
+```
+$ audio-degradation-toolbox -h
+usage: audio-degradation-toolbox [-h] [-d DEGRADATIONS_FILE] [-p] [-t]
+                                 input_path output_path
+
+Apply controlled degradations to an audio file, specified in a JSON file containing an array of degradations (executed in order).
+
+Paths are relative to the execution dir, and square brackets denote optional arguments along with their default values.
+
+    { "name": "noise", ["snr": 20, "color": "pink"] }
+    { "name": "mp3", ["bitrate": 320] }
+    { "name": "gain", ["volume": 10.0] }
+    { "name": "normalize" }
+    { "name": "low_pass", ["cutoff": 1000.0] }
+    { "name": "high_pass", ["cutoff": 1000.0] }
+    { "name": "trim_millis", ["amount": 100, "offset": 0] }
+    { "name": "mix", "path": STRING, ["snr": 20.0] }
+    { "name": "speedup", "speed": FLOAT }
+    { "name": "resample", "rate": INT }
+    { "name": "pitch_shift", "octaves": FLOAT }
+    { "name": "dynamic_range_compression", ["threshold": -20.0, "ratio": 4.0, "attack": 5.0, "release": 50.0] }
+    { "name": "impulse_response", "path": STRING }
+    { "name": "equalizer", "frequency": FLOAT, ["bandwidth": 1.0, "gain": -3.0] }
+    { "name": "time_stretch", "factor": FLOAT }
+    { "name": "delay", "n_samples": INT }
+    { "name": "clipping", ["n_samples": 0, "percent_samples": 0.0] }
+    { "name": "wow_flutter", ["intensity": 1.5, "frequency": 0.5, "upsampling_factor": 5.0 ] }
+
+positional arguments:
+  input_path            Path to input file
+  output_path           Path to output WAV file
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d DEGRADATIONS_FILE, --degradations-file DEGRADATIONS_FILE
+                        JSON file of degradations to apply
+  -p, --play            Play file audio at each degradation step
+  -t, --trim            Trim trailing and leading silences
+```
+
 ### Presets and samples
 
 Some of the ISMIR2013 degradations are chains of basic degradations. Given the JSON format that my tool accepts, these are most easily represented as JSON files in the [presets](./presets) dir.
@@ -60,107 +102,4 @@ Afterwards, apply the degradations with:
 
 ```
 $ audio-degradation-toolbox -d degradations.json in.wav out_degraded.wav
-```
-
-Full usage text, with a listing of all available degradations:
-
-```
-usage: audio-degradation-toolbox [-h] [-d DEGRADATIONS_FILE] [-p]
-                                 input_path output_path
-
-Apply controlled degradations to an audio file
-
-Available degradations (executed in order of the JSON array):
-
-    noise: add noise to produce desired SNR
-    {
-        "name": "noise",
-        ["snr": 20,]
-        ["color": "violet"]
-    }
-
-    mp3: transcode file to mp3 with given bitrate
-    {
-        "name": "mp3",
-        ["bitrate": 320]
-    }
-
-    gain: add volume in db
-    {
-        "name": "gain",
-        ["volume": 10]
-    }
-
-    normalize
-    {
-        "name": "normalize"
-    }
-
-    low_pass: apply a low-pass filter
-    {
-        "name": "low_pass",
-        ["cutoff": 1000]
-    }
-
-    high_pass: apply a high-pass filter
-    {
-        "name": "high_pass",
-        ["cutoff": 1000]
-    }
-
-    trim_millis: lop off milliseconds at offset (-1 = from end)
-    {
-        "name": "trim_millis",
-        ["amount": 100,]
-        ["offset": 0]
-    }
-
-    mix: mix another audio file with the original
-    {
-        "name": "mix",
-        "path": "./relative_path_mix.wav"
-    }
-
-    impulse_response: convolve with IR
-    {
-        "name": "impulse_response",
-        "path": "./relative_path_ir.wav"
-    }
-
-    speedup: make it faster
-    {
-        "name": "speedup",
-        "speed": 2
-    }
-
-    resample: resample to new sampling rate
-    {
-        "name": "resample",
-        "rate": 44100
-    }
-
-    pitch_shift
-    {
-        "name": "pitch_shift",
-        "ocatves": -0.5
-    }
-
-    dynamic_range_compression
-    {
-        "name": "dynamic_range_compression",
-        ["threshold": -20,]
-        ["ratio": 4.0,]
-        ["attack": 5.0,]
-        ["release": 50.0]
-    }
-
-positional arguments:
-  input_path            Path to input file
-  output_path           Path to output WAV file
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -d DEGRADATIONS_FILE, --degradations-file DEGRADATIONS_FILE
-                        JSON file of degradations to apply
-  -p, --play            Play file audio at each degradation step
 ```

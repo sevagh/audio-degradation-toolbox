@@ -1,5 +1,6 @@
 import numpy
 import pydub.effects as pydub_effects
+import pydub.scipy_effects
 from acoustics.generator import noise
 import math
 from tempfile import NamedTemporaryFile
@@ -14,11 +15,13 @@ from pysndfx import AudioEffectsChain
 
 def mp3_transcode(audio, bitrate):
     # do a pydub round trip through an mp3 file
+    ret = None
     with NamedTemporaryFile() as tmp_mp3_f:
         audio.sound.export(
             out_f=tmp_mp3_f.name, format="mp3", bitrate="{0}k".format(bitrate)
         )
-        return Audio(path=tmp_mp3_f, ext="mp3")
+        ret = Audio(path=tmp_mp3_f, ext="mp3")
+    return ret
 
 
 def apply_gain(audio, gain_dbs):

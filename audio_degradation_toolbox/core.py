@@ -36,7 +36,7 @@ class Degradation(object):
         if trim_on_load:
             self.file_audio = trim(self.file_audio)
 
-    def apply_degradation(self, d, play_):
+    def apply_degradation(self, d, play_=False):
         name = d["name"]
         params = ""
 
@@ -70,7 +70,7 @@ class Degradation(object):
             params = "amount: {0}, offset: {1}".format(amount, offset)
         elif name == "mix":
             mix_path = d["path"]
-            snr = d.get("snr", 20)
+            snr = float(d.get("snr", 20.0))
             self.file_audio = apply_mix(self.file_audio, mix_path, snr)
             params = "mix_path: {0}, snr: {1}".format(mix_path, snr)
         elif name == "speedup":

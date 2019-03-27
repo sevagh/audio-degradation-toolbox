@@ -4,91 +4,28 @@ import argparse
 import json
 
 INTRO = """
-Apply controlled degradations to an audio file
+Apply controlled degradations to an audio file, specified in a JSON file containing an array of degradations (executed in order).
 
-Available degradations (executed in order of the JSON array):
+Paths are relative to the execution dir, and square brackets denote optional arguments along with their default values.
 
-    noise: add noise to produce desired SNR
-    {
-        "name": "noise",
-        ["snr": 20,]
-        ["color": "violet"]
-    }
-
-    mp3: transcode file to mp3 with given bitrate
-    {
-        "name": "mp3",
-        ["bitrate": 320]
-    }
-
-    gain: add volume in db
-    {
-        "name": "gain",
-        ["volume": 10]
-    }
-
-    normalize
-    {
-        "name": "normalize"
-    }
-
-    low_pass: apply a low-pass filter
-    {
-        "name": "low_pass",
-        ["cutoff": 1000]
-    }
-
-    high_pass: apply a high-pass filter
-    {
-        "name": "high_pass",
-        ["cutoff": 1000]
-    }
-
-    trim_millis: lop off milliseconds at offset (-1 = from end)
-    {
-        "name": "trim_millis",
-        ["amount": 100,]
-        ["offset": 0]
-    }
-
-    mix: mix another audio file with the original
-    {
-        "name": "mix",
-        "path": "./relative_path_mix.wav"
-    }
-
-    impulse_response: convolve with IR
-    {
-        "name": "impulse_response",
-        "path": "./relative_path_ir.wav"
-    }
-
-    speedup: make it faster
-    {
-        "name": "speedup",
-        "speed": 2
-    }
-
-    resample: resample to new sampling rate
-    {
-        "name": "resample",
-        "rate": 44100
-    }
-
-    pitch_shift
-    {
-        "name": "pitch_shift",
-        "ocatves": -0.5
-    }
-
-    dynamic_range_compression
-    {
-        "name": "dynamic_range_compression",
-        ["threshold": -20,]
-        ["ratio": 4.0,]
-        ["attack": 5.0,]
-        ["release": 50.0]
-    }
+    { "name": "noise", ["snr": 20, "color": "pink"] }
+    { "name": "mp3", ["bitrate": 320] }
+    { "name": "gain", ["volume": 10.0] }
+    { "name": "normalize" }
+    { "name": "low_pass", ["cutoff": 1000.0] }
+    { "name": "high_pass", ["cutoff": 1000.0] }
+    { "name": "trim_millis", ["amount": 100, "offset": 0] }
+    { "name": "mix", "path": STRING, ["snr": 20.0] }
+    { "name": "speedup", "speed": FLOAT }
+    { "name": "resample", "rate": INT }
+    { "name": "pitch_shift", "octaves": FLOAT }
+    { "name": "dynamic_range_compression", ["threshold": -20.0, "ratio": 4.0, "attack": 5.0, "release": 50.0] }
+    { "name": "impulse_response", "path": STRING }
+    { "name": "equalizer", "frequency": FLOAT, ["bandwidth": 1.0, "gain": -3.0] }
+    { "name": "time_stretch", "factor": FLOAT }
+    { "name": "delay", "n_samples": INT }
+    { "name": "clipping", ["n_samples": 0, "percent_samples": 0.0] }
+    { "name": "wow_flutter", ["intensity": 1.5, "frequency": 0.5, "upsampling_factor": 5.0 ] }
 """
 
 
