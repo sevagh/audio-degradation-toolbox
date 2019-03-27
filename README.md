@@ -3,15 +3,28 @@ Python 3 implementation of the MATLAB [Audio Degradation Toolbox](https://code.s
 * Original MATLAB toolbox (with ISMIR2013 additions)
 * A similar tool, [audio_degrader](https://github.com/EliosMolina/audio_degrader)
 
-I rely on a number of Python packages including pydub, scipy, numpy, and acoustics.
-
 This tool can read non-WAV files as input, but only outputs single-channel WAV files - this is because I find that WAV is the most universal format with friendly-licensed libraries in any language.
 
 ### Install, develop, contribute
 
-It should be as easy as `pip3 install .` after cloning this repository. Afterwards, run `audio-degradation-toolbox`.
+It should be as easy as `pip3 install .` after cloning this repository. Afterwards, run `audio-degradation-toolbox`. You may need to install `sox` from your OS package manager for some effects.
 
 To develop, `pip3 install -e .`. The code is formatted with [black](https://github.com/ambv/black), so run that before contributing anything.
+
+To use the `--play` flag (i.e. play the audio clip between each degradation), you must have `mpv` installed and in `$PATH`:
+
+```
+sevagh:audio-degradation-toolbox $ audio-degradation-toolbox \
+        Viola.arco.ff.sulC.E3.stereo.aiff \
+        Viola-E3-degraded.wav \
+        --degradations-file ./degradations.json \
+        --play
+Playing audio before degradations
+A: 00:00:03 / 00:00:03 (93%)
+Applied degradation noise with params color: white, snr: 20
+Playing audio after degradation
+A: 00:00:03 / 00:00:03 (93%)
+```
 
 ### Usage
 

@@ -108,19 +108,23 @@ def main():
         action="store_true",
         help="Play file audio at each degradation step",
     )
+    parser.add_argument(
+        "-t", "--trim", action="store_true", help="Trim trailing and leading silences"
+    )
     parser.add_argument("input_path", help="Path to input file")
     parser.add_argument("output_path", help="Path to output WAV file")
     args = parser.parse_args()
 
-    deg = Degradation(path=args.input_path)
-
-    if args.play:
-        print("Playing audio before degradations")
-        playback_shim(deg.file_audio)
+    deg = Degradation(path=args.input_path, trim_on_load=args.trim)
 
     if args.degradations_file:
         with open(args.degradations_file) as f:
             degradations = json.load(f)
+
+            if args.play:
+                print("Playing audio before degradations")
+                playback_shim(deg.file_audio)
+
             for degradation in degradations:
                 deg.apply_degradation(degradation, play_=args.play)
 

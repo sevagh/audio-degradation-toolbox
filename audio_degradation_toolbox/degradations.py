@@ -11,6 +11,8 @@ from .playback import playback_shim
 import array
 import sys
 import scipy.signal as scipy_signal
+import librosa
+from pysndfx import AudioEffectsChain
 
 
 def mp3_transcode(audio, bitrate):
@@ -132,11 +134,12 @@ def apply_noise(audio, color, snr):
 
 
 def apply_speedup(audio, speed):
-    return Audio(sound=pydub_effects.speedup(audio.sound, speed), old_audio=audio)
+    return apply_resample(audio, audio.sample_rate / speed)
 
 
 def apply_resample(audio, new_sample_rate):
-    return Audio(sound=audio.sound.set_frame_rate(new_sample_rate), old_audio=audio)
+    int_sample_rate = int(new_sample_rate)
+    return Audio(sound=audio.sound.set_frame_rate(int_sample_rate), old_audio=audio)
 
 
 def apply_pitch_shift(audio, octaves):
@@ -176,3 +179,51 @@ def apply_impulse_response(audio, ir_path):
 
     conv = Audio(samples=conv_s, old_audio=audio)
     return conv
+
+
+def apply_time_stretch(audio, factor):
+    samples = numpy.frombuffer(audio.samples, dtype=audio.sound.array_type).astype(
+        numpy.float64
+    )
+    stretched = librosa.effects.time_stretch(samples, factor)
+    stretched = _normalize(stretched, audio.sound.sample_width * 8)
+
+    return Audio(
+        samples=array.array(
+            audio.sound.array_type, stretched.astype(audio.sound.array_type)
+        ),
+        old_audio=audio,
+    )
+
+
+def trim(audio):
+    samples = numpy.frombuffer(audio.samples, dtype=audio.sound.array_type).astype(
+        numpy.float64
+    )
+    trimmed, _ = librosa.effects.trim(samples)
+    trimmed = _normalize(trimmed, audio.sound.sample_width * 8)
+
+    return Audio(
+        samples=array.array(
+            audio.sound.array_type, trimmed.astype(audio.sound.array_type)
+        ),
+        old_audio=audio,
+    )
+
+
+def apply_eq(audio, frequency, q, db):
+    fx = AudioEffectsChain().equalizer(frequency, q, db)
+
+    samples = numpy.frombuffer(audio.samples, dtype=audio.sound.array_type).astype(
+        numpy.float64
+    )
+
+    samples = fx(samples)
+    samples = _normalize(samples, audio.sound.sample_width * 8)
+
+    return Audio(
+        samples=array.array(
+            audio.sound.array_type, samples.astype(audio.sound.array_type)
+        ),
+        old_audio=audio,
+    )

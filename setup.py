@@ -18,7 +18,11 @@ REQUIRES_PYTHON = '>=3.6.0'
 VERSION = None
 
 REQUIRED = [
-    'acoustics', 'numpy', 'pydub'
+    'acoustics', 'numpy', 'pydub', 'librosa'
+]
+
+EXTRAS = [
+    #'python-mpv'
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -93,6 +97,7 @@ setup(
         'console_scripts': ['audio-degradation-toolbox=audio_degradation_toolbox.cli:main'],
     },
     install_requires=REQUIRED,
+    extra_requires=EXTRAS,
     include_package_data=True,
     license='MIT',
     classifiers=[

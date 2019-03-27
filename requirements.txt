@@ -2,3 +2,5 @@ acoustics
 numpy
 pydub
 scipy
+librosa
+pysndfx

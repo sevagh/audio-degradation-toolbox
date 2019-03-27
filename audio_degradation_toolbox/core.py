@@ -7,6 +7,7 @@ from acoustics.generator import noise
 import math
 from tempfile import NamedTemporaryFile
 from .degradations import (
+    trim,
     apply_noise,
     apply_mix,
     mp3_transcode,
@@ -20,13 +21,17 @@ from .degradations import (
     apply_pitch_shift,
     apply_dynamic_range_compression,
     apply_impulse_response,
+    apply_time_stretch,
+    apply_eq,
 )
 from .audio import Audio
 
 
 class Degradation(object):
-    def __init__(self, path, ext=None):
+    def __init__(self, path, ext=None, trim_on_load=False):
         self.file_audio = Audio(path, ext=ext)
+        if trim_on_load:
+            self.file_audio = trim(self.file_audio)
 
     def apply_degradation(self, d, play_):
         name = d["name"]
@@ -92,6 +97,18 @@ class Degradation(object):
             path = d["path"]
             self.file_audio = apply_impulse_response(self.file_audio, path)
             params = "path: {0}".format(path)
+        elif name == "equalizer":
+            frequency = float(d["frequency"])
+            bandwidth = float(d.get("bandwidth", 1.0))
+            gain = float(d.get("gain", -3.0))
+            self.file_audio = apply_eq(self.file_audio, frequency, bandwidth, gain)
+            params = "frequency: {0}, bandwidth: {1}, gain: {2}".format(
+                frequency, bandwidth, gain
+            )
+        elif name == "time_stretch":
+            factor = float(d["factor"])
+            self.file_audio = apply_time_stretch(self.file_audio, factor)
+            params = "factor: {0}".format(factor)
         else:
             raise ValueError("Invalid degradation {0}".format(name))
 
