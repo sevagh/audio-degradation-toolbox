@@ -57,11 +57,11 @@ class Degradation(object):
             self.file_audio = apply_normalization(self.file_audio)
         elif name == "low_pass":
             cutoff = float(d.get("cutoff", 1000.0))
-            self.file_audio = apply_lowpass(self.file_audio, cutoff)
+            self.file_audio = apply_low_pass(self.file_audio, cutoff)
             params = "cutoff: {0}".format(cutoff)
         elif name == "high_pass":
             cutoff = float(d.get("cutoff", 1000.0))
-            self.file_audio = apply_highpass(self.file_audio, cutoff)
+            self.file_audio = apply_high_pass(self.file_audio, cutoff)
             params = "cutoff: {0}".format(cutoff)
         elif name == "trim_millis":
             amount = int(d.get("amount", 100))

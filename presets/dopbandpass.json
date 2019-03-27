@@ -1,0 +1,13 @@
+[
+  {
+    "name": "low_pass",
+    "cutoff": 5000
+  },
+  {
+    "name": "high_pass",
+    "cutoff": 133.33
+  },
+  {
+    "name": "normalization"
+  }
+]
