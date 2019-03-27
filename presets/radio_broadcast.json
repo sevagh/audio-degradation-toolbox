@@ -1,0 +1,20 @@
+[
+  {
+    "name": "dynamic_range_compression",
+    "threshold": -40,
+    "ratio": 1.7,
+    "attack": 0.2,
+    "release": 0.2
+  },
+  {
+    "name": "delay",
+    "samples": 9600
+  },
+  {
+    "name": "speedup",
+    "speed": 1.02
+  },
+  {
+    "name": "normalize"
+  }
+]

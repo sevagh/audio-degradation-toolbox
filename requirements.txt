@@ -4,3 +4,4 @@ pydub
 scipy
 librosa
 pysndfx
+numba

@@ -5,6 +5,12 @@ Python 3 implementation of the MATLAB [Audio Degradation Toolbox](https://code.s
 
 This tool can read non-WAV files as input, but only outputs single-channel WAV files - this is because I find that WAV is the most universal format with friendly-licensed libraries in any language.
 
+### Presets and samples
+
+Some of the ISMIR2013 degradations are chains of basic degradations. Given the JSON format that my tool accepts, these are most easily represented as JSON files in the [presets](./presets) dir.
+
+[Samples](./samples), mostly IR wav files, come from the original MATLAB repository. I've resampled them from 96000 to 48000 with ffmpeg, since pydub has questionable support for 96000.
+
 ### Install, develop, contribute
 
 It should be as easy as `pip3 install .` after cloning this repository. Afterwards, run `audio-degradation-toolbox`. You may need to install `sox` from your OS package manager for some effects.

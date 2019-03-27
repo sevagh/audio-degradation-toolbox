@@ -23,6 +23,9 @@ from .degradations import (
     apply_impulse_response,
     apply_time_stretch,
     apply_eq,
+    apply_delay,
+    apply_clipping,
+    apply_wow_flutter,
 )
 from .audio import Audio
 
@@ -109,6 +112,29 @@ class Degradation(object):
             factor = float(d["factor"])
             self.file_audio = apply_time_stretch(self.file_audio, factor)
             params = "factor: {0}".format(factor)
+        elif name == "delay":
+            n_samples = int(d["samples"])
+            self.file_audio = apply_delay(self.file_audio, n_samples)
+            params = "samples: {0}".format(n_samples)
+        elif name == "clipping":
+            n_samples = int(d.get("samples", 0))
+            percent_samples = float(d.get("percent_samples", 0.0))
+            self.file_audio = apply_clipping(
+                self.file_audio, n_samples, percent_samples
+            )
+            params = "samples: {0}, percent_samples: {1}".format(
+                n_samples, percent_samples
+            )
+        elif name == "wow_flutter":
+            intensity = float(d.get("intensity", 1.5))
+            frequency = float(d.get("frequency", 0.5))
+            upsampling_factor = float(d.get("upsampling_factor", 5.0))
+            self.file_audio = apply_wow_flutter(
+                self.file_audio, intensity, frequency, upsampling_factor
+            )
+            params = "intensity: {0}, frequency: {1}, upsampling_factor: {2}".format(
+                intensity, frequency, upsampling_factor
+            )
         else:
             raise ValueError("Invalid degradation {0}".format(name))
 

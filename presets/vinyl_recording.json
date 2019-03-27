@@ -1,0 +1,24 @@
+[
+  {
+    "name": "impulse_response",
+    "path": "./samples/IR_VinylPlayer1960.wav"
+  },
+  {
+    "name": "mix",
+    "path": "./samples/Noise_OldDustyRecording.wav",
+    "snr": 40
+  },
+  {
+    "name": "noise",
+    "color": "pink",
+    "snr": 40
+  },
+  {
+    "name": "wow_flutter",
+    "intensity": 1.3,
+    "frequency": 0.55
+  },
+  {
+    "name": "normalize"
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "name": "impulse_response",
+    "path": "./samples/IR_GoogleNexusOneFrontSpeaker.wav"
+  },
+  {
+    "name": "noise",
+    "color": "pink",
+    "snr": 40
+  },
+  {
+    "name": "normalize"
+  }
+]

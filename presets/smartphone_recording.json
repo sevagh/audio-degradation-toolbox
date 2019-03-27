@@ -1,0 +1,29 @@
+[
+  {
+    "name": "impulse_response",
+    "path": "./samples/IR_GoogleNexusOneFrontMic.wav"
+  },
+  {
+    "name": "dynamic_range_compression",
+    "threshold": -35,
+    "ratio": 2,
+    "attack": 0.2,
+    "release": 0.2
+  },
+  {
+    "name": "delay",
+    "samples": 9600
+  },
+  {
+    "name": "clipping",
+    "percent_samples": 0.3
+  },
+  {
+    "name": "noise",
+    "color": "pink",
+    "snr": 35
+  },
+  {
+    "name": "normalize"
+  }
+]

@@ -1,17 +1,14 @@
 import numpy
-from numpy.linalg import norm
-from pydub import AudioSegment
-from pydub.utils import get_array_type
 import pydub.effects as pydub_effects
 from acoustics.generator import noise
 import math
 from tempfile import NamedTemporaryFile
 from .audio import Audio
-from .playback import playback_shim
 import array
 import sys
 import scipy.signal as scipy_signal
 import librosa
+import numba
 from pysndfx import AudioEffectsChain
 
 
@@ -67,54 +64,6 @@ def trim_millis(audio, amount, offset):
     return ret
 
 
-def _mix(audio, mix_data, snr):
-    Ps = 0
-    Pn = 0
-
-    for i in range(len(audio.samples)):
-        Ps += abs(audio.samples[i]) * abs(audio.samples[i])
-        Pn += abs(mix_data[i]) * abs(mix_data[i])
-    Ps /= len(audio.samples)
-    Pn /= len(audio.samples)
-
-    k_factor = math.sqrt((Ps / Pn) * (10 ** (-snr / 10)))
-    mix_data *= k_factor
-
-    # some necessary casting to avoid fucking with the length of the audio file
-    mix_data = array.array(
-        audio.sound.array_type, mix_data.astype(audio.sound.array_type)
-    )
-
-    for i in range(len(mix_data)):
-        try:
-            mix_data[i] += audio.samples[i]
-        except OverflowError:
-            try:
-                mix_data[i] = numpy.finfo(mix_data.typecode).max
-            except ValueError:
-                mix_data[i] = numpy.iinfo(mix_data.typecode).max
-    a = Audio(samples=mix_data, old_audio=audio)
-    return a
-
-
-def _stretch_mix(audio, mix_audio):
-    if len(mix_audio.samples) > len(audio.samples):
-        mix_audio = Audio(
-            samples=mix_audio.samples[: len(audio.samples)], old_audio=mix_audio
-        )
-    elif len(mix_audio.samples) < len(audio.samples):
-        m_s = mix_audio.samples
-        while len(m_s) < len(audio.samples):
-            m_s += m_s[
-                : min(
-                    len(audio.samples) - len(mix_audio.samples), len(mix_audio.samples)
-                )
-            ]
-        mix_audio = Audio(samples=m_s, old_audio=mix_audio)
-
-    return mix_audio
-
-
 def apply_mix(audio, mix, snr):
     mix_audio = Audio(path=mix)
     mix_audio = _stretch_mix(audio, mix_audio)
@@ -154,16 +103,6 @@ def apply_dynamic_range_compression(audio, threshold, ratio, attack, release):
         ),
         old_audio=audio,
     )
-
-
-# thanks https://github.com/limmor1/Convolve
-def _normalize(y, bitwidth):
-    if abs(numpy.amax(y)) > abs(numpy.amin(y)):
-        larger = numpy.amax(y)
-    else:
-        larger = abs(numpy.amin(y))
-    y = y / larger * ((2 ** bitwidth / 2) - 1)
-    return y
 
 
 def apply_impulse_response(audio, ir_path):
@@ -227,3 +166,181 @@ def apply_eq(audio, frequency, q, db):
         ),
         old_audio=audio,
     )
+
+
+def apply_delay(audio, n_samples):
+    samples = (
+        array.array(audio.sound.array_type, [0 for _ in range(n_samples)])
+        + audio.samples
+    )
+    return Audio(samples=samples, old_audio=audio)
+
+
+def apply_clipping(audio, n_samples, percent_samples):
+    if n_samples != 0 and percent_samples != 0.0:
+        raise ValueError("only specify one of samples or percent_samples")
+
+    def db2mag(ydb):
+        y = math.pow(10, ydb / 20)
+        return y
+
+    eps = numpy.spacing(1)
+
+    samples = numpy.frombuffer(audio.samples, dtype=audio.sound.array_type).astype(
+        numpy.complex
+    )
+
+    if n_samples == 0 and percent_samples == 0.0:
+        quant_measured = max(
+            numpy.quantile(numpy.mean(numpy.power(samples, 2.2)), 0.95), eps
+        )
+        quant_wanted = db2mag(-5)
+        samples_out = samples * (quant_wanted / quant_measured)
+    else:
+        sorted_samples = numpy.abs(samples)
+        sorted_samples.sort()
+        num_samples = len(sorted_samples)
+        if n_samples == 0:
+            n_samples = int(percent_samples * num_samples)
+        divisor = numpy.min(sorted_samples[num_samples - n_samples + 1 : num_samples])
+        divisor = max(divisor, eps)
+        samples_out = samples / divisor
+
+    samples_out = numpy.clip(samples_out, -1, 1)
+    samples_out *= 0.99
+
+    samples_out = _normalize(samples_out, audio.sound.sample_width * 8)
+
+    return Audio(
+        samples=array.array(
+            audio.sound.array_type, samples_out.astype(audio.sound.array_type)
+        ),
+        old_audio=audio,
+    )
+
+
+# straight from matlab
+def apply_wow_flutter(audio, intensity, frequency, upsampling_factor):
+    audio_out = audio.samples
+
+    fs_oversampled = audio.sample_rate * upsampling_factor
+    a_m = intensity / 100.0
+    f_m = frequency
+
+    num_samples = len(audio.samples)
+    len_secs = len(audio.sound) / 1000.0
+    num_full_periods = math.floor(len_secs * f_m)
+    num_samples_to_warp = numpy.round(num_full_periods * audio.sample_rate / f_m)
+
+    old_sample_positions_to_new_oversampled_positions = numpy.round(
+        _time_assignment_new_to_old(
+            numpy.arange(1, num_samples_to_warp) / audio.sample_rate, a_m, f_m
+        )
+        * fs_oversampled
+    )
+
+    audio_upsampled = apply_resample(audio, fs_oversampled).samples
+
+    for i, pos in enumerate(old_sample_positions_to_new_oversampled_positions):
+        audio_out[1 + i] = audio_upsampled[int(numpy.round(pos))]
+
+    return Audio(samples=audio_out, sample_rate=fs_oversampled, old_audio=audio)
+
+
+def trim(audio):
+    samples = numpy.frombuffer(audio.samples, dtype=audio.sound.array_type).astype(
+        numpy.float64
+    )
+    trimmed, _ = librosa.effects.trim(samples)
+    trimmed = _normalize(trimmed, audio.sound.sample_width * 8)
+
+    return Audio(
+        samples=array.array(
+            audio.sound.array_type, trimmed.astype(audio.sound.array_type)
+        ),
+        old_audio=audio,
+    )
+
+
+def _mix(audio, mix_data, snr):
+    Ps = 0
+    Pn = 0
+
+    for i in range(len(audio.samples)):
+        Ps += abs(audio.samples[i]) * abs(audio.samples[i])
+        Pn += abs(mix_data[i]) * abs(mix_data[i])
+    Ps /= len(audio.samples)
+    Pn /= len(audio.samples)
+
+    k_factor = math.sqrt((Ps / Pn) * (10 ** (-snr / 10)))
+    mix_data *= k_factor
+
+    # some necessary casting to avoid fucking with the length of the audio file
+    mix_data = array.array(
+        audio.sound.array_type, mix_data.astype(audio.sound.array_type)
+    )
+
+    for i in range(len(mix_data)):
+        try:
+            mix_data[i] += audio.samples[i]
+        except OverflowError:
+            try:
+                mix_data[i] = numpy.finfo(mix_data.typecode).max
+            except ValueError:
+                mix_data[i] = numpy.iinfo(mix_data.typecode).max
+    a = Audio(samples=mix_data, old_audio=audio)
+    return a
+
+
+def _stretch_mix(audio, mix_audio):
+    if len(mix_audio.samples) > len(audio.samples):
+        mix_audio = Audio(
+            samples=mix_audio.samples[: len(audio.samples)], old_audio=mix_audio
+        )
+    elif len(mix_audio.samples) < len(audio.samples):
+        m_s = mix_audio.samples
+        while len(m_s) < len(audio.samples):
+            m_s += m_s[
+                : min(
+                    len(audio.samples) - len(mix_audio.samples), len(mix_audio.samples)
+                )
+            ]
+        mix_audio = Audio(samples=m_s, old_audio=mix_audio)
+
+    return mix_audio
+
+
+# thanks https://github.com/limmor1/Convolve
+def _normalize(y, bitwidth):
+    if abs(numpy.amax(y)) > abs(numpy.amin(y)):
+        larger = numpy.amax(y)
+    else:
+        larger = abs(numpy.amin(y))
+    y = y / larger * ((2 ** bitwidth / 2) - 1)
+    return y
+
+
+# copied straight from matlab
+@numba.jit
+def _times_assignment_old_to_new(x, a_m, f_m):
+    time_assigned = [0.0 for _ in len(x)]
+
+    for i, elem in enumerate(x):
+        time_assigned[i] = (
+            x[i] + a_m + math.sin(2.0 * math.pi * f_m * x[i]) / (2.0 * math.pi * f_m)
+        )
+
+    return numpy.ndarray(time_assigned)
+
+
+@numba.jit
+def _time_assignment_new_to_old(y, a_m, f_m):
+    time_assigned = y
+
+    for k in range(1, 41):
+        for i, elem in enumerate(y):
+            time_assigned[i] = y[i] - a_m * math.sin(
+                2.0 * math.pi * f_m * time_assigned[i]
+            ) / (2.0 * math.pi * f_m)
+
+    return time_assigned

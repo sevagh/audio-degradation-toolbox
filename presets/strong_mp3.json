@@ -1,0 +1,9 @@
+[
+  {
+    "name": "mp3",
+    "bitrate": 32
+  },
+  {
+    "name": "normalize"
+  }
+]
