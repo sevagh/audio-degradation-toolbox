@@ -8,6 +8,7 @@ from .audio import Audio
 import array
 import sys
 import scipy.signal as scipy_signal
+import scipy.interpolate as scipy_interpolate
 import librosa
 import numba
 from pysndfx import AudioEffectsChain
@@ -248,6 +249,54 @@ def apply_wow_flutter(audio, intensity, frequency, upsampling_factor):
         audio_out[1 + i] = audio_upsampled[int(numpy.round(pos))]
 
     return Audio(samples=audio_out, sample_rate=fs_oversampled, old_audio=audio)
+
+
+# from matlab
+@numba.jit
+def apply_aliasing(audio, dest_frequency):
+    n_samples = len(audio.samples)
+    n_samples_new = int(numpy.round(n_samples / audio.sample_rate * dest_frequency))
+    t_old = numpy.arange(0.0, n_samples) / audio.sample_rate
+    t_new = numpy.arange(0.0, n_samples_new) / dest_frequency
+
+    audio_samples = numpy.frombuffer(
+        audio.samples, dtype=audio.sound.array_type
+    ).astype(numpy.float64)
+
+    interp = scipy_interpolate.interp1d(t_old, audio_samples, kind="nearest")
+    tmp = numpy.asarray([interp(t_new[x]) for x in range(len(t_new))], dtype=numpy.int)
+
+    tmp_audio = Audio(
+        samples=array.array(audio.sound.array_type, tmp),
+        old_audio=audio,
+        sample_rate=dest_frequency,
+    )
+    return apply_resample(tmp_audio, audio.sample_rate)
+
+
+#quadratic distortion, approximated with sine (chebyshev polynomials?)
+@numba.jit
+def apply_harmonic_distortion(audio, num_passes):
+    audio_samples = numpy.frombuffer(
+        audio.samples, dtype=audio.sound.array_type
+    ).astype(numpy.float64)
+
+    # normalize to between -1 and 1
+    a_min = audio_samples.min()
+    a_max = audio_samples.max()
+
+    audio_samples = numpy.interp(audio_samples, (a_min, a_max), (-1.0, +1.0))
+
+    for _ in range(num_passes):
+        audio_samples = numpy.sin(audio_samples * (math.pi / 2.0))
+
+    # scale it back up?
+    audio_samples = numpy.interp(audio_samples, (-1.0, +1.0), (a_min, a_max))
+
+    return Audio(
+        samples=array.array(audio.sound.array_type, audio_samples.astype(numpy.int)),
+        old_audio=audio,
+    )
 
 
 def trim(audio):

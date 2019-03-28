@@ -26,6 +26,8 @@ from .degradations import (
     apply_delay,
     apply_clipping,
     apply_wow_flutter,
+    apply_aliasing,
+    apply_harmonic_distortion,
 )
 from .audio import Audio
 
@@ -135,6 +137,14 @@ class Degradation(object):
             params = "intensity: {0}, frequency: {1}, upsampling_factor: {2}".format(
                 intensity, frequency, upsampling_factor
             )
+        elif name == "aliasing":
+            dest_frequency = float(d.get("dest_frequency", 8000.0))
+            self.file_audio = apply_aliasing(self.file_audio, dest_frequency)
+            params = "dest_frequency: {0}".format(dest_frequency)
+        elif name == "harmonic_distortion":
+            num_passes = int(d.get("num_passes", 3))
+            self.file_audio = apply_harmonic_distortion(self.file_audio, num_passes)
+            params = "num_passes: {0}".format(num_passes)
         else:
             raise ValueError("Invalid degradation {0}".format(name))
 

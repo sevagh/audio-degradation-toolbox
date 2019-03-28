@@ -36,7 +36,13 @@ class Audio(object):
                 self.sample_rate = sample_rate
             else:
                 self.sample_rate = old_audio.sample_rate
-            self.sound = old_audio.sound._spawn(self.samples)
+            self.sample_rate = int(self.sample_rate)
+            self.sound = AudioSegment(
+                data=self.samples,
+                sample_width=old_audio.sound.sample_width,
+                frame_rate=self.sample_rate,
+                channels=1,
+            )
             self.format = old_audio.format
         if sound:
             self.sound = sound
