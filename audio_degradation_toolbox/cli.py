@@ -23,8 +23,8 @@ Paths are relative to the execution dir, and square brackets denote optional arg
     { "name": "impulse_response", "path": STRING }
     { "name": "equalizer", "frequency": FLOAT, ["bandwidth": 1.0, "gain": -3.0] }
     { "name": "time_stretch", "factor": FLOAT }
-    { "name": "delay", "n_samples": INT }
-    { "name": "clipping", ["n_samples": 0, "percent_samples": 0.0] }
+    { "name": "delay", "samples": INT }
+    { "name": "clipping", ["samples": 0, "percent_samples": 0.0] }
     { "name": "wow_flutter", ["intensity": 1.5, "frequency": 0.5, "upsampling_factor": 5.0 ] }
     { "name": "aliasing", ["dest_frequency": 8000.0] }
     { "name": "harmonic_distortion", ["num_passes": 3] }

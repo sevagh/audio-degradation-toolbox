@@ -120,7 +120,7 @@ class Degradation(object):
             params = "samples: {0}".format(n_samples)
         elif name == "clipping":
             n_samples = int(d.get("samples", 0))
-            percent_samples = float(d.get("percent_samples", 0.0))
+            percent_samples = float(d.get("percent_samples", 0.0)) / 100.0
             self.file_audio = apply_clipping(
                 self.file_audio, n_samples, percent_samples
             )

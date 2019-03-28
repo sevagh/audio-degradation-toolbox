@@ -71,9 +71,6 @@ def trim_millis(audio, amount, offset):
 def apply_mix(audio, mix, snr):
     mix_audio = Audio(path=mix)
     mix_audio = _stretch_mix(audio, mix_audio)
-    mix_data = numpy.frombuffer(mix_audio.samples, dtype=mix_audio.sound.array_type)
-
-    mix_audio = Audio(samples=mix_data, old_audio=mix_audio)
 
     mix_data = numpy.frombuffer(
         mix_audio.samples, dtype=mix_audio.sound.array_type
@@ -252,7 +249,6 @@ def apply_wow_flutter(audio, intensity, frequency, upsampling_factor):
 
 
 # from matlab
-@numba.jit
 def apply_aliasing(audio, dest_frequency):
     n_samples = len(audio.samples)
     n_samples_new = int(numpy.round(n_samples / audio.sample_rate * dest_frequency))
@@ -274,8 +270,7 @@ def apply_aliasing(audio, dest_frequency):
     return apply_resample(tmp_audio, audio.sample_rate)
 
 
-#quadratic distortion, approximated with sine (chebyshev polynomials?)
-@numba.jit
+# quadratic distortion, approximated with sine (chebyshev polynomials?)
 def apply_harmonic_distortion(audio, num_passes):
     audio_samples = numpy.frombuffer(
         audio.samples, dtype=audio.sound.array_type

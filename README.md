@@ -59,7 +59,7 @@ Some of the ISMIR2013 degradations are chains of basic degradations. Given the J
 
 It should be as easy as `pip3 install .` after cloning this repository. Afterwards, run `audio-degradation-toolbox`. You may need to install `sox` from your OS package manager for some effects.
 
-To develop, `pip3 install -e .`. The code is formatted with [black](https://github.com/ambv/black), so run that before contributing anything.
+To develop, `pip3 install -e .`. The code is formatted with [black](https://github.com/ambv/black), so run that before contributing anything. To run tests, run `python3 -m unittest discover`.
 
 To use the `--play` flag (i.e. play the audio clip between each degradation), you must have `mpv` installed and in `$PATH`:
 
