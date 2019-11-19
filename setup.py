@@ -17,9 +17,10 @@ AUTHOR = 'Sevag Hanssian'
 REQUIRES_PYTHON = '>=3.6.0'
 VERSION = None
 
-REQUIRED = [
-    'acoustics', 'numpy', 'pydub', 'librosa'
-]
+REQUIRED = []
+with open("./requirements.txt") as f:
+    for l in f:
+        REQUIRED.append(l[:-1])
 
 EXTRAS = [
     #'python-mpv'
